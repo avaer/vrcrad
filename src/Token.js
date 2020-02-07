@@ -45,7 +45,8 @@ async function fetchTokenJson(id) {
   return await p;
 }
 async function getMetadata(id, key) {
-  // console.log('get metadata', key);
+  id = parseInt(id, 10);
+  console.log('get metadata', [id, key]);
   const p = makePromise();
   const instance = await contract.getInstance();
   instance.getMetadata(id, key, (err, value) => {
@@ -58,7 +59,8 @@ async function getMetadata(id, key) {
   return await p;
 }
 async function setMetadata(id, key, value) {
-  // console.log('set metadata', key, value);
+  id = parseInt(id, 10);
+  console.log('set metadata', [id, key, value]);
   const p = makePromise();
   const instance = await contract.getInstance();
   instance.setMetadata(id, key, value, (err, result) => {
