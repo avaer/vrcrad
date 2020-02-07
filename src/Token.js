@@ -3,12 +3,12 @@ import contract from './contract.js';
 import {makePromise} from './util.js';
 const {QRCode} = window;
 
-function makeTokenImgSrc(token) {
+function makeImgSrc(text) {
   const qrRender = document.getElementById('qr-render');
   var qrcode = new QRCode(qrRender, {
-    text: `https://gunt.one/tokens/${token}`,
-    width: 128,
-    height: 128,
+    text,
+    width: 300,
+    height: 300,
     colorDark : "#000000",
     colorLight : "#ffffff",
     correctLevel : QRCode.CorrectLevel.H
@@ -56,8 +56,20 @@ async function fetchTokenJson(id) {
   });
   return await p;
 }
+async function generateSignature(id) {
+  const s = 'Gunt' + id;
+  const p = makePromise();
+  window.web3.personal.sign(s, contract.account, (err, signature) => {
+    if (!err) {
+      p.accept(signature);
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
+}
 async function getMetadata(id, key) {
-  id = parseInt(id, 10);
+  // id = parseInt(id, 10);
   console.log('get metadata', [id, key]);
   const p = makePromise();
   const instance = await contract.getInstance();
@@ -71,7 +83,7 @@ async function getMetadata(id, key) {
   return await p;
 }
 async function setMetadata(id, key, value) {
-  id = parseInt(id, 10);
+  // id = parseInt(id, 10);
   console.log('set metadata', [id, key, value]);
   const p = makePromise();
   const instance = await contract.getInstance();
@@ -90,26 +102,37 @@ function Token(props) {
   const [tokenJsonFetched, setTokenJsonFetched] = React.useState(false);
   const [tokenBalance, setTokenBalance] = React.useState(null);
   const [tokenJson, setTokenJson] = React.useState(null);
+  const [signature, setSignature] = React.useState('');
+  const [signatureImgSrc, setSignatureImgSrc] = React.useState('');
   const [readKey, setReadKey] = React.useState('');
   const [readValue, setReadValue] = React.useState('');
   const [writeKey, setWriteKey] = React.useState('');
   const [writeValue, setWriteValue] = React.useState('');
 
   if (!tokenImgSrc) {
-    setTokenImgSrc(makeTokenImgSrc(props.token));
+    setTokenImgSrc(makeImgSrc(`https://gunt.one/tokens/${props.token}`));
   }
   if (!tokenJsonFetched) {
     setTokenJsonFetched(true);
     fetchTokenBalance(props.token).then(setTokenBalance);
     fetchTokenJson(props.token).then(setTokenJson);
   }
+  if (signature && !signatureImgSrc) {
+    setSignatureImgSrc(makeImgSrc(signature));
+  }
 
   return (
     <div className="token">
       <section>
         <h1>Token {props.token}</h1>
-        <img src={tokenImgSrc} />
+        {tokenImgSrc ? <img src={tokenImgSrc} /> : null}
         <h2>Balance: {tokenBalance}</h2>
+        {tokenBalance > 0 ? <form onSubmit={e => { e.preventDefault(); generateSignature(props.token).then(setSignature).catch(console.warn); }}>
+          <h2>Generate signature</h2>
+          <input type="submit" value="Generate" />
+          <pre>{signature}</pre>
+          {signatureImgSrc ? <img src={signatureImgSrc} /> : null}
+        </form> : null}
         <form onSubmit={e => { e.preventDefault(); getMetadata(props.token, readKey).then(setReadValue).catch(console.warn); }}>
           <h2>Get metadata</h2>
           <label>

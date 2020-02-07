@@ -10,14 +10,14 @@ import contract from './contract.js';
 function App() {
   contract.init();
 
-  let match;
+  let match, n;
   if (/^\/secret$/.test(window.location.pathname)) {
     return (
       <Secret />
     );
-  } else if (match = window.location.pathname.match(/^\/tokens\/([0-9]+)$/)) {
+  } else if ((match = window.location.pathname.match(/^\/tokens\/([0-9]+)$/)) && (n = parseInt(match[1], 10))) {
     return (
-      <Token token={match[1]} />
+      <Token token={n} />
     );
   } else if (/^\/mint$/.test(window.location.pathname)) {
     return (
