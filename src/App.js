@@ -1,12 +1,23 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import Contract from './Contract.js';
+import Tokens from './Tokens.js';
+import Token from './Token.js';
+import Mint from './Mint.js';
 
 function App() {
-  if (/\/contract/.test(window.location.pathname)) {
+  let match;
+  if (/^\/tokens$/.test(window.location.pathname)) {
     return (
-      <Contract/>
+      <Tokens />
+    );
+  } else if (match = window.location.pathname.match(/^\/tokens\/([0-9]+)$/)) {
+    return (
+      <Token token={match[1]} />
+    );
+  } else if (/^\/mint$/.test(window.location.pathname)) {
+    return (
+      <Mint />
     );
   } else {
     return (
