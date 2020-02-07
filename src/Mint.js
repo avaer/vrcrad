@@ -25,7 +25,7 @@ function Mint(props) {
         <form onSubmit={e => { e.preventDefault(); mintToken(id, count).catch(console.warn); }}>
           <label>
             <span>Token id to mint</span>
-            <input type="number" value="0" min="0" step="1" onChange={e => { setId(e.target.value); }} />
+            <input type="number" value={id} min="0" step="1" onChange={e => { setId(e.target.value); }} />
             <span>Count</span>
             <input type="number" value={count} min="1" step="1" onChange={e => { setCount(e.target.value); }} />
             <input type="submit" value="Mint token" />
