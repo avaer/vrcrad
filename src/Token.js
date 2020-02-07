@@ -44,11 +44,31 @@ async function fetchTokenJson(id) {
   });
   return await p;
 }
-function getMetadata(key) {
-  console.log('get metadata', key);
+async function getMetadata(id, key) {
+  // console.log('get metadata', key);
+  const p = makePromise();
+  const instance = await contract.getInstance();
+  instance.getMetadata(id, key, (err, value) => {
+    if (!err) {
+      p.accept(value);
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
 }
-function setMetadata(key, value) {
-  console.log('set metadata', key, value);
+async function setMetadata(id, key, value) {
+  // console.log('set metadata', key, value);
+  const p = makePromise();
+  const instance = await contract.getInstance();
+  instance.setMetadata(id, key, value, (err, result) => {
+    if (!err) {
+      p.accept();
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
 }
 
 function Token(props) {
@@ -56,6 +76,7 @@ function Token(props) {
   const [tokenJsonFetched, setTokenJsonFetched] = React.useState(false);
   const [tokenJson, setTokenJson] = React.useState(null);
   const [readKey, setReadKey] = React.useState('');
+  const [readValue, setReadValue] = React.useState('');
   const [writeKey, setWriteKey] = React.useState('');
   const [writeValue, setWriteValue] = React.useState('');
 
@@ -72,15 +93,16 @@ function Token(props) {
       <section>
         <h1>Token {props.token}</h1>
         <img src={tokenImgSrc} />
-        <form onSubmit={e => { e.preventDefault(); getMetadata(readKey); }}>
+        <form onSubmit={e => { e.preventDefault(); getMetadata(props.token, readKey).then(setReadValue).catch(console.warn); }}>
           <h2>Get metadata</h2>
           <label>
             <span>Key</span>
             <input type="text" value={readKey} onChange={e => { setReadKey(e.target.value); }} />
           </label>
           <input type="submit" value="Get value" />
+          <div>{readValue}</div>
         </form>
-        <form onSubmit={e => { e.preventDefault(); setMetadata(writeKey, writeValue); }}>
+        <form onSubmit={e => { e.preventDefault(); setMetadata(props.token, writeKey, writeValue).catch(console.warn); }}>
           <h2>Set metadata</h2>
           <label>
             <span>Key</span>
