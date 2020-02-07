@@ -1,4 +1,6 @@
 import React from 'react';
+import contract from './contract.js';
+import {makePromise} from './util.js';
 const {QRCode} = window;
 
 function makeTokenImgSrc(token) {
@@ -16,6 +18,17 @@ function makeTokenImgSrc(token) {
   qrRender.innerHTML = '';
   return s;
 }
+async function fetchTokenJson() {
+  const p = makePromise();
+  contract.instance.mint(id, contract.account, count, (err, result) => {
+    if (!err) {
+      p.accept(result);
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
+}
 function getMetadata(key) {
   console.log('get metadata', key);
 }
@@ -23,14 +36,20 @@ function setMetadata(key, value) {
   console.log('set metadata', key, value);
 }
 
-let tokenImgSrc = null;
 function Token(props) {
+  const [tokenImgSrc, setTokenImgSrc] = React.useState('');
+  const [tokenJsonFetched, setTokenJsonFetched] = React.useState(false);
+  const [tokenJson, setTokenJson] = React.useState(null);
   const [readKey, setReadKey] = React.useState('');
   const [writeKey, setWriteKey] = React.useState('');
   const [writeValue, setWriteValue] = React.useState('');
 
   if (!tokenImgSrc) {
-    tokenImgSrc = makeTokenImgSrc(props.token);
+    setTokenImgSrc(makeTokenImgSrc(props.token));
+  }
+  if (!tokenJsonFetched) {
+    setTokenJsonFetched(true);
+    fetchTokenJson().then(setTokenJson);
   }
 
   return (

@@ -1,19 +1,9 @@
 import React from 'react';
 import contract from './contract.js';
-
-const _makePromise = () => {
-  let accept, reject;
-  const p = new Promise((a, r) => {
-    accept = a;
-    reject = r;
-  });
-  p.accept = accept;
-  p.reject = reject;
-  return p;
-};
+import {makePromise} from './util.js';
 
 async function mintToken(id, count) {
-  const p = _makePromise();
+  const p = makePromise();
   contract.instance.mint(id, contract.account, count, (err, result) => {
     if (!err) {
       p.accept(result);
