@@ -1,10 +1,10 @@
 import React from 'react';
 
-function Tokens() {
+function Secret() {
   const [id, setId] = React.useState(1);
 
   return (
-    <div className="tokens">
+    <div className="secret">
       <section>
         <form onSubmit={e => { e.preventDefault(); window.location.pathname = `/tokens/${id}`; }}>
           <label>
@@ -19,8 +19,13 @@ function Tokens() {
           <input type="submit" value="Mint new token" />
         </form>
       </section>
+      <section>
+        <form onSubmit={e => { e.preventDefault(); window.location.pathname = '/redeem'; }}>
+          <input type="submit" value="Redeem token" />
+        </form>
+      </section>
     </div>
   );
 }
 
-export default Tokens;
+export default Secret;

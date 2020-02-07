@@ -1,15 +1,16 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
-import Tokens from './Tokens.js';
+import Secret from './Secret.js';
 import Token from './Token.js';
 import Mint from './Mint.js';
+import Redeem from './Redeem.js';
 
 function App() {
   let match;
-  if (/^\/tokens$/.test(window.location.pathname)) {
+  if (/^\/secret$/.test(window.location.pathname)) {
     return (
-      <Tokens />
+      <Secret />
     );
   } else if (match = window.location.pathname.match(/^\/tokens\/([0-9]+)$/)) {
     return (
@@ -18,6 +19,10 @@ function App() {
   } else if (/^\/mint$/.test(window.location.pathname)) {
     return (
       <Mint />
+    );
+  } else if (/^\/redeem$/.test(window.location.pathname)) {
+    return (
+      <Redeem />
     );
   } else {
     return (
