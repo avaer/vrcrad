@@ -1,0 +1,19 @@
+{
+  "name": "gunt-one",
+  "version": "0.0.1",
+  "description": "has been deployed: an easter egg it comes to those who do not beg it's in a place that could be worse so start the hunt inside the verse",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avaer/gunt-one.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avaer/gunt-one/issues"
+  },
+  "homepage": "https://github.com/avaer/gunt-one#readme"
+}
