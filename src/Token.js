@@ -96,6 +96,20 @@ async function setMetadata(id, key, value) {
   });
   return await p;
 }
+async function setMetadataFromSignature(id, key, value, signature) {
+  // id = parseInt(id, 10);
+  console.log('set metadata from signature', [id, key, value, signature]);
+  const p = makePromise();
+  const instance = await contract.getInstance();
+  instance.setMetadataFromSignature(id, key, value, signature, (err, result) => {
+    if (!err) {
+      p.accept();
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
+}
 
 function Token(props) {
   const [tokenImgSrc, setTokenImgSrc] = React.useState('');
@@ -108,6 +122,7 @@ function Token(props) {
   const [readValue, setReadValue] = React.useState('');
   const [writeKey, setWriteKey] = React.useState('');
   const [writeValue, setWriteValue] = React.useState('');
+  const [signatureValue, setSignatureValue] = React.useState('');
 
   if (!tokenImgSrc) {
     setTokenImgSrc(makeImgSrc(`https://gunt.one/tokens/${props.token}`));
@@ -142,7 +157,14 @@ function Token(props) {
           <input type="submit" value="Get value" />
           <div>{readValue}</div>
         </form>
-        <form onSubmit={e => { e.preventDefault(); setMetadata(props.token, writeKey, writeValue).catch(console.warn); }}>
+        <form onSubmit={e => {
+          e.preventDefault();
+          if (signatureValue) {
+            setMetadataFromSignature(props.token, writeKey, writeValue, signatureValue).catch(console.warn);
+          } else {
+            setMetadata(props.token, writeKey, writeValue).catch(console.warn);
+          }
+        }}>
           <h2>Set metadata</h2>
           <label>
             <span>Key</span>
@@ -151,6 +173,10 @@ function Token(props) {
           <label>
             <span>Value</span>
             <input type="text" value={writeValue} onChange={e => { setWriteValue(e.target.value); }} />
+          </label>
+          <label>
+            <span>Signature to use (optional)</span>
+            <input type="text" value={signatureValue} onChange={e => { setSignatureValue(e.target.value); }} />
           </label>
           <input type="submit" value="Set value" />
         </form>
