@@ -3,6 +3,7 @@ import abi from './abi.js';
 
 const contract = {
   instance: null,
+  account: null,
   async init() {
     if (window.ethereum) {
       window.web3 = new window.Web3(window.ethereum);
@@ -13,6 +14,7 @@ const contract = {
         // web3.eth.sendTransaction({/* ... */});
 
         this.instance = window.web3.eth.contract(abi).at(address);
+        this.account = window.web3.eth.accounts[0];
       } catch (err) {
         // User denied account access...
         console.warn(err);
