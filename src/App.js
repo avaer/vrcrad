@@ -5,8 +5,11 @@ import Secret from './Secret.js';
 import Token from './Token.js';
 import Mint from './Mint.js';
 import Redeem from './Redeem.js';
+import contract from './contract.js';
 
 function App() {
+  contract.init();
+
   let match;
   if (/^\/secret$/.test(window.location.pathname)) {
     return (

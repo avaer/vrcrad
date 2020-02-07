@@ -2,7 +2,6 @@ import React from 'react';
 const {QRCode} = window;
 
 function makeTokenImgSrc(token) {
-  // console.log('get qr code', QRCode);
   const qrRender = document.getElementById('qr-render');
   var qrcode = new QRCode(qrRender, {
     text: `https://gunt.one/tokens/${token}`,
@@ -14,8 +13,6 @@ function makeTokenImgSrc(token) {
   });
   const c = qrRender.querySelector('canvas');
   const s = c.toDataURL();
-  // console.log('got img 1', c, s);
-  // const imgSrc = qrRender.querySelector('img').src;
   qrRender.innerHTML = '';
   return s;
 }
@@ -34,7 +31,6 @@ function Token(props) {
 
   if (!tokenImgSrc) {
     tokenImgSrc = makeTokenImgSrc(props.token);
-    // console.log('got img src', tokenImgSrc);
   }
 
   return (
