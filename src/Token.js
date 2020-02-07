@@ -18,11 +18,26 @@ function makeTokenImgSrc(token) {
   qrRender.innerHTML = '';
   return s;
 }
-async function fetchTokenJson() {
+async function fetchTokenJson(id) {
   const p = makePromise();
-  contract.instance.mint(id, contract.account, count, (err, result) => {
+  const instance = await contract.getInstance();
+  instance.getMetadataKeys(id, (err, keys) => {
     if (!err) {
-      p.accept(result);
+      const o = {};
+      Promise.all(keys.map(key => {
+        const p = makePromise();
+        instance.getMetadata(id, key, (err, value) => {
+          if (!err) {
+            o[key] = value;
+            p.accept();
+          } else {
+            p.reject(err);
+          }
+        });
+        return p;
+      })).then(() => {
+        p.accept(o);
+      });
     } else {
       p.reject(err);
     }
@@ -49,7 +64,7 @@ function Token(props) {
   }
   if (!tokenJsonFetched) {
     setTokenJsonFetched(true);
-    fetchTokenJson().then(setTokenJson);
+    fetchTokenJson(props.token).then(setTokenJson);
   }
 
   return (

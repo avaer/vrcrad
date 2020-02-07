@@ -4,7 +4,8 @@ import {makePromise} from './util.js';
 
 async function mintToken(id, count) {
   const p = makePromise();
-  contract.instance.mint(id, contract.account, count, (err, result) => {
+  const instance = await contract.getInstance();
+  instance.mint(id, contract.account, count, (err, result) => {
     if (!err) {
       p.accept(result);
     } else {
