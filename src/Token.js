@@ -18,6 +18,18 @@ function makeTokenImgSrc(token) {
   qrRender.innerHTML = '';
   return s;
 }
+async function fetchTokenBalance(id) {
+  const p = makePromise();
+  const instance = await contract.getInstance();
+  instance.balanceOf(contract.account, id, (err, balance) => {
+    if (!err) {
+      p.accept(balance.toNumber());
+    } else {
+      p.reject(err);
+    }
+  });
+  return await p;
+}
 async function fetchTokenJson(id) {
   const p = makePromise();
   const instance = await contract.getInstance();
@@ -76,6 +88,7 @@ async function setMetadata(id, key, value) {
 function Token(props) {
   const [tokenImgSrc, setTokenImgSrc] = React.useState('');
   const [tokenJsonFetched, setTokenJsonFetched] = React.useState(false);
+  const [tokenBalance, setTokenBalance] = React.useState(null);
   const [tokenJson, setTokenJson] = React.useState(null);
   const [readKey, setReadKey] = React.useState('');
   const [readValue, setReadValue] = React.useState('');
@@ -87,6 +100,7 @@ function Token(props) {
   }
   if (!tokenJsonFetched) {
     setTokenJsonFetched(true);
+    fetchTokenBalance(props.token).then(setTokenBalance);
     fetchTokenJson(props.token).then(setTokenJson);
   }
 
@@ -95,6 +109,7 @@ function Token(props) {
       <section>
         <h1>Token {props.token}</h1>
         <img src={tokenImgSrc} />
+        <h2>Balance: {tokenBalance}</h2>
         <form onSubmit={e => { e.preventDefault(); getMetadata(props.token, readKey).then(setReadValue).catch(console.warn); }}>
           <h2>Get metadata</h2>
           <label>
