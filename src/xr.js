@@ -398,8 +398,8 @@ const itemMeshes = Promise.all([
 const lineMesh = (() => {
   const geometries = (() => {
     const result = [];
-    for (let i = 0; i < 100; i += 3) {
-      result.push(new THREE.BoxBufferGeometry(0.005, 0.005, 0.005).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 0.005 * i)));
+    for (let i = 0; i < 200; i += 3) {
+      result.push(new THREE.BoxBufferGeometry(0.005, 0.005, 0.005).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 0.5 - 0.005 * i)));
     }
     return result;
   })();
@@ -429,10 +429,18 @@ const lineMesh = (() => {
   });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.frustumCulled = false;
+  mesh.setEndpoints = (start, end) => {
+    mesh.position.copy(start).add(end).divideScalar(2);
+    mesh.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 0, -1),
+      end.clone().sub(start).normalize()
+    );
+    const s = start.distanceTo(end)*2;
+    mesh.scale.set(s, s, s);
+  };
   return mesh;
 })();
-lineMesh.position.y = 1;
-lineMesh.position.z = -1/2;
+lineMesh.setEndpoints(new THREE.Vector3(-0.5, 0, 0), new THREE.Vector3(0.5, 2, 0));
 scene.add(lineMesh);
 
 const _makeControllerMesh = () => {
@@ -482,7 +490,6 @@ function render() {
   // card.rotation.x += 0.05;
 
   itemBlockMeshes.forEach((itemBlockMesh, i) => {
-    console.log('got i', itemBlockMesh, i)
     itemBlockMesh.material.uniforms.uSelected.value = (i > 0) ? 1 : 0;
     itemBlockMesh.material.uniforms.uTime.value = (Date.now() % 1000) / 1000;
   });
