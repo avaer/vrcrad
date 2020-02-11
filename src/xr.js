@@ -20,6 +20,8 @@ scene.background = new THREE.Color(0xCCCCCC);
 const camera = new THREE.PerspectiveCamera();
 camera.position.y = 1;
 camera.position.z = 0.2;
+camera.near = 0.01;
+camera.far = 100;
 const rect = canvas2d.getBoundingClientRect();
 camera.aspect = rect.width/rect.height;
 camera.updateProjectionMatrix();
@@ -49,6 +51,9 @@ const card = (() => {
   new THREE.GLTFLoader().load('crad.glb', o => {
     o = o.scene;
     o = o.children[2];
+    o.children[1].material = new THREE.MeshPhongMaterial({
+      color: 0x771111,
+    });
     object.add(o);
   }, function onProgress() {
     // nothing
