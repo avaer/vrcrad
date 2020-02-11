@@ -534,6 +534,19 @@ function render() {
         uiMesh.position.y = 1;
         uiMesh.position.z = -0.5;
         scene.add(uiMesh);
+
+        const linkMesh = (() => {
+          const geometry = new THREE.BoxBufferGeometry(0.1, 0.1, 0.1);
+          const material = new THREE.MeshBasicMaterial({
+            color: 0x4fc3f7,
+            opacity: 0.5,
+            transparent: true,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.frustumCulled = false;
+          return mesh;
+        })();
+        uiMesh.add(linkMesh);
       } else {
         console.warn(error);
       }
@@ -542,7 +555,7 @@ function render() {
     uiIframe.contentWindow.postMessage({
       method: 'render',
       id: ++renderIds,
-      htmlString: `<div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: #F30;"><h1>Lol</h1></div>`,
+      htmlString: `<div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: #e8eaf6;"><h1>Lol</h1></div>`,
       templateData: {},
       width: uiSize,
       height: uiSize,
