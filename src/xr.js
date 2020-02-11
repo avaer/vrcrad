@@ -1,5 +1,5 @@
 const {THREE} = window;
-  
+
 const canvas2d = document.getElementById('canvas');
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -9,13 +9,13 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 // renderer.setClearColor(new THREE.Color(0x000000), 0);
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.physicallyCorrectLights = true;
+// renderer.outputEncoding = THREE.sRGBEncoding;
+// renderer.physicallyCorrectLights = true;
 // renderer.gammaFactor = 1;
 renderer.xr.enabled = true;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xCCCCCC);
+// scene.background = new THREE.Color(0xCCCCCC);
 
 const camera = new THREE.PerspectiveCamera();
 camera.position.y = 1;
@@ -48,18 +48,66 @@ scene.add(cubeMesh);
 
 const card = (() => {
   const object = new THREE.Object3D();
-  new THREE.GLTFLoader().load('crad.glb', o => {
-    o = o.scene;
-    o = o.children[2];
-    o.children[1].material = new THREE.MeshPhongMaterial({
-      color: 0x771111,
-    });
+  
+  Promise.all([
+    /* fetch('DejaVu-sdf.json').then(res => res.json()),
+    new Promise((accept, reject) => {
+      new THREE.TextureLoader().load('DejaVu-sdf.png', accept);
+    }), */
+    new Promise((accept, reject) => {
+      new THREE.GLTFLoader().load('crad.glb', o => {
+        o = o.scene;
+        o = o.children[2];
+        o.children[1].material = new THREE.MeshPhongMaterial({
+          color: 0x771111,
+        });
+        accept(o);
+      }, function onProgress() {
+        // nothing
+      }, reject);
+    }),
+  ]).then(([
+    // fontJson,
+    // fontTexture,
+    o,
+  ]) => {
+    // console.log('got', fontJson, fontTexture, o);
+    const _makeTextMesh = (s = '') => {
+      const w = 0.0856 * 0.9;
+      const geometry = new THREE.PlaneBufferGeometry(w, w/10);
+      const canvas = document.createElement('canvas');
+      canvas.width = 2048;
+      canvas.height = 2048/10;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = "rgba(255, 255, 255, 0)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#FFF";
+      ctx.textAlign = "start";
+      ctx.textBaseline = "top";
+      ctx.font = "80px Consolas";
+      ctx.fillText(s, 0, 0);
+      const texture = new THREE.Texture(canvas);
+      texture.needsUpdate = true;
+      texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.minFilter = THREE.LinearFilter;
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.5,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      return mesh;
+    };
+    
+    const textMesh = _makeTextMesh('Avaer');
+    textMesh.frustumCulled = false;
+    textMesh.position.z = 0.001;
+    // window.textMesh = textMesh;
+    object.add(textMesh);
+
     object.add(o);
-  }, function onProgress() {
-    // nothing
-  }, err => {
-    console.warn(err);
   });
+    
   object.position.set(0, 1, 0);
   return object;
 })();
@@ -71,7 +119,7 @@ const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.screenSpacePanning = false;
 // controls.minDistance = 100;
 // controls.maxDistance = 500;
-controls.maxPolarAngle = Math.PI / 2;
+// controls.maxPolarAngle = Math.PI / 2;
 controls.target.set(0, 1, 0);
 controls.update();
 
@@ -80,7 +128,7 @@ function render() {
   cubeMesh.rotation.x += 0.01;
   cubeMesh.rotation.z += 0.01;
   
-  card.rotation.x += 0.05;
+  // card.rotation.x += 0.05;
 
   renderer.render(scene, camera);
 }
