@@ -59,7 +59,7 @@ const card = (() => {
       });
       // o.material.roughness = 0;
     }); */
-    window.o = o;
+    // window.o = o;
     object.add(o);
   }, function onProgress() {
     // nothing
