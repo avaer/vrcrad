@@ -138,7 +138,7 @@ const card = (() => {
 scene.add(card);
 
 const NUM_POSITIONS_CHUNK = 150 * 1024;
-const pixelSize = 0.01;
+const pixelSize = 0.007;
 
 const _makeImageDataGeometry = (width, height, size, matrix, imageDataData) => {
   const halfSize = size / 2;
@@ -307,6 +307,76 @@ const itemMeshes = Promise.all([
   });
 });
 
+const pointerMesh = (() => {
+  const targetGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries([
+    new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0, -0.1, 0)),
+    new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 0, 1))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 0.1)),
+    new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0, 0))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0.1, 0, 0)),
+  ]);
+  const geometry = THREE.BufferGeometryUtils.mergeBufferGeometries([
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeTranslation(-0.5, 0.5, -0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, -1, 0))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(-0.5, -0.5, -0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(-0.5, 0.5, 0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0.5, -0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0))))
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0.5, 0.5, 0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1))))
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, -1, 0))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(-0.5, -0.5, 0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0))))
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, -1, 0))))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0.5, -0.5, -0.5)),
+    targetGeometry.clone()
+      .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(-1, 1, 0).normalize(), new THREE.Vector3(1, -1, 0).normalize())))
+      .applyMatrix(new THREE.Matrix4().makeTranslation(0.5, -0.5, 0.5)),
+  ]).applyMatrix(new THREE.Matrix4().makeScale(0.1, 0.1, 0.1));
+  const targetVsh = `
+    varying vec2 vUv;
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+    }
+  `;
+  const targetFsh = `
+    uniform float uTime;
+    void main() {
+      gl_FragColor = vec4(vec3(1.0 - min(pow(uTime, 0.5), 0.9)), 1.0);
+    }
+  `;
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: {
+        type: 'f',
+        value: 0,
+      },
+    },
+    vertexShader: targetVsh,
+    fragmentShader: targetFsh,
+    // transparent: true,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  // mesh.visible = false;
+  return mesh;
+})();
+pointerMesh.position.y = 1;
+scene.add(pointerMesh);
+
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 // controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 // controls.dampingFactor = 0.05;
@@ -323,6 +393,8 @@ function render() {
   cubeMesh.rotation.z += 0.01;
   
   // card.rotation.x += 0.05;
+
+  pointerMesh.material.uniforms.uTime.value = (Date.now() % 1000) / 1000;
 
   renderer.render(scene, camera);
 }
