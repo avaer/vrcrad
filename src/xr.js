@@ -137,28 +137,8 @@ const card = (() => {
 })();
 scene.add(card);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-// controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-// controls.dampingFactor = 0.05;
-controls.screenSpacePanning = false;
-// controls.minDistance = 100;
-// controls.maxDistance = 500;
-// controls.maxPolarAngle = Math.PI / 2;
-controls.target.set(0, 1, 0);
-controls.update();
-
-renderer.setAnimationLoop(render);
-function render() {
-  cubeMesh.rotation.x += 0.01;
-  cubeMesh.rotation.z += 0.01;
-  
-  // card.rotation.x += 0.05;
-
-  renderer.render(scene, camera);
-}
-
-/* const NUM_POSITIONS_CHUNK = 150 * 1024;
-const pixelSize = 0.03;
+const NUM_POSITIONS_CHUNK = 150 * 1024;
+const pixelSize = 0.01;
 
 const _makeImageDataGeometry = (width, height, size, matrix, imageDataData) => {
   const halfSize = size / 2;
@@ -299,12 +279,53 @@ const makeSpriteMesh = img => {
   const imageData = _getImageData(img);
   const {data: imageDataData} = imageData;
   const geometry = _makeImageDataGeometry(img.width, img.height, pixelSize, new THREE.Matrix4(), imageDataData);
-  geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, (pixelSize / 2) - (pixelSize * 0.15), 0));
+  geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, (pixelSize / 2), 0));
   const material = pixelMaterial;
 
   const mesh = new THREE.Mesh(geometry, material);
   return mesh;
-}; */
+};
+
+const itemMeshes = Promise.all([
+  'Armor_03.png',
+].map(name => {
+  return new Promise((accept, reject) => {
+    const img = new Image();
+    img.src = 'icons/' + name;
+    img.onload = () => {
+      const mesh = makeSpriteMesh(img);
+      accept(mesh);
+    };
+    img.onerror = reject;
+  });
+})).then(itemMeshes => {
+  console.log('got item meshes', itemMeshes);
+  itemMeshes.forEach(itemMesh => {
+    itemMesh.position.y = 1;
+    itemMesh.position.z = -0.05;
+    scene.add(itemMesh);
+  });
+});
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+// controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false;
+// controls.minDistance = 100;
+// controls.maxDistance = 500;
+// controls.maxPolarAngle = Math.PI / 2;
+controls.target.set(0, 1, 0);
+controls.update();
+
+renderer.setAnimationLoop(render);
+function render() {
+  cubeMesh.rotation.x += 0.01;
+  cubeMesh.rotation.z += 0.01;
+  
+  // card.rotation.x += 0.05;
+
+  renderer.render(scene, camera);
+}
 
 export function xrEnter() {
   let currentSession = null;
