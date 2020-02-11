@@ -475,7 +475,7 @@ for (let i = 0; i < controllerMeshes.length; i++) {
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 // controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 // controls.dampingFactor = 0.05;
-controls.screenSpacePanning = false;
+// controls.screenSpacePanning = false;
 // controls.minDistance = 100;
 // controls.maxDistance = 500;
 // controls.maxPolarAngle = Math.PI / 2;
@@ -495,6 +495,67 @@ function render() {
   });
 
   renderer.render(scene, camera);
+}
+
+{
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://render.exokit.xyz/';
+  // iframe.src = './exokit-render/index.html';
+  iframe.onload = () => {
+    const uiIframe = iframe;
+    let renderIds = 0;
+
+    const uiSize = 1024;
+    const mc = new MessageChannel();
+    mc.port1.onmessage = e => {
+      const {data} = e;
+      const {error, result} = data;
+
+      if (result) {
+        console.log('got render', result);
+
+        const uiCanvas = document.createElement('canvas');
+        uiCanvas.width = uiSize;
+        uiCanvas.height = uiSize;
+        const ctx = uiCanvas.getContext('2d');
+        ctx.putImageData(new ImageData(new Uint8ClampedArray(result.data.buffer, result.data.byteOffset, result.data.byteLength), uiSize, uiSize), 0, 0);
+        const uiMesh = (() => {
+          const geometry = new THREE.PlaneBufferGeometry(1, 1);
+          const texture = new THREE.Texture(uiCanvas);
+          texture.needsUpdate = true;
+          const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            side: THREE.DoubleSide,
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          mesh.frustumCulled = false;
+          return mesh;
+        })();
+        uiMesh.position.y = 1;
+        uiMesh.position.z = -0.5;
+        scene.add(uiMesh);
+      } else {
+        console.warn(error);
+      }
+    };
+
+    uiIframe.contentWindow.postMessage({
+      method: 'render',
+      id: ++renderIds,
+      htmlString: `<div style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: #F30;"><h1>Lol</h1></div>`,
+      templateData: {},
+      width: uiSize,
+      height: uiSize,
+      port: mc.port2,
+    }, '*', [mc.port2]);
+  };
+  iframe.onerror = err => {
+    console.warn(err);
+  };
+  iframe.style.position = 'absolute';
+  iframe.style.top = '-4096px';
+  iframe.style.left = '-4096px';
+  document.body.appendChild(iframe);
 }
 
 export function xrEnter() {
