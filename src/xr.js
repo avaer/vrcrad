@@ -286,28 +286,7 @@ const makeSpriteMesh = img => {
   return mesh;
 };
 
-const itemMeshes = Promise.all([
-  'Armor_03.png',
-].map(name => {
-  return new Promise((accept, reject) => {
-    const img = new Image();
-    img.src = 'icons/' + name;
-    img.onload = () => {
-      const mesh = makeSpriteMesh(img);
-      accept(mesh);
-    };
-    img.onerror = reject;
-  });
-})).then(itemMeshes => {
-  console.log('got item meshes', itemMeshes);
-  itemMeshes.forEach(itemMesh => {
-    itemMesh.position.y = 1;
-    itemMesh.position.z = -0.05;
-    scene.add(itemMesh);
-  });
-});
-
-const pointerMesh = (() => {
+const makeBlockMesh = (() => {
   const targetGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries([
     new THREE.BoxBufferGeometry(0.03, 0.2, 0.03)
       .applyMatrix(new THREE.Matrix4().makeTranslation(0, -0.1, 0)),
@@ -369,13 +348,71 @@ const pointerMesh = (() => {
     fragmentShader: targetFsh,
     // transparent: true,
   });
+  return () => {
+  const mesh = new THREE.Mesh(geometry, material);
+    mesh.frustumCulled = false;
+    // mesh.visible = false;
+    return mesh;
+  };
+})();
+
+let itemBlockMeshes = [];
+const itemMeshes = Promise.all([
+  'Armor_03.png',
+].map((name, i) => {
+  return new Promise((accept, reject) => {
+    const img = new Image();
+    img.src = 'icons/' + name;
+    img.onload = () => {
+      const blockMesh = makeBlockMesh();
+      const itemMesh = makeSpriteMesh(img);
+      blockMesh.add(itemMesh);
+      blockMesh.position.x = i * 0.1;
+      blockMesh.position.y = 1;
+      blockMesh.position.z = -0.05;
+      blockMesh.box = new THREE.Box3(
+        blockMesh.position.clone().sub(new THREE.Vector3(0.1/2, 0.1/2, 0.1/2)),
+        blockMesh.position.clone().add(new THREE.Vector3(0.1/2, 0.1/2, 0.1/2))
+      );
+      accept(blockMesh);
+    };
+    img.onerror = reject;
+  });
+})).then(newItemBlockMeshes => {
+  itemBlockMeshes = newItemBlockMeshes;
+  itemBlockMeshes.forEach(itemBlockMesh => {
+    scene.add(itemBlockMesh);
+  });
+});
+
+const _makeControllerMesh = () => {
+  const geometry = new THREE.CylinderBufferGeometry(0.005, 0.005, 1)
+    .applyMatrix(new THREE.Matrix4().makeTranslation(0, 1/2, 0))
+    .applyMatrix(new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI/2)));
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x0000FF,
+  });
   const mesh = new THREE.Mesh(geometry, material);
   mesh.frustumCulled = false;
-  // mesh.visible = false;
   return mesh;
-})();
-pointerMesh.position.y = 1;
-scene.add(pointerMesh);
+};
+const controllerMeshes = [
+  _makeControllerMesh(),
+  _makeControllerMesh(),
+];
+for (let i = 0; i < controllerMeshes.length; i++) {
+  const controllerMesh = controllerMeshes[i];
+  const grip = renderer.xr.getController(i);
+  // const gripPoint = gripPoints[i];
+  grip.addEventListener('selectstart', () => {
+    console.log('grip position start', grip.posiiton.toArray());
+  });
+  grip.addEventListener('selectend', () => {
+    console.log('grip position end', grip.posiiton.toArray());
+  });
+  grip.add(controllerMesh);
+  scene.add(grip);
+}
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 // controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
@@ -394,7 +431,9 @@ function render() {
   
   // card.rotation.x += 0.05;
 
-  pointerMesh.material.uniforms.uTime.value = (Date.now() % 1000) / 1000;
+  itemBlockMeshes.forEach(itemBlockMesh => {
+    itemBlockMesh.material.uniforms.uTime.value = (Date.now() % 1000) / 1000;
+  });
 
   renderer.render(scene, camera);
 }
