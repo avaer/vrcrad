@@ -385,6 +385,46 @@ const itemMeshes = Promise.all([
   });
 });
 
+const lineMesh = (() => {
+  const geometries = (() => {
+    const result = [];
+    for (let i = 0; i < 100; i += 3) {
+      result.push(new THREE.BoxBufferGeometry(0.005, 0.005, 0.005).applyMatrix(new THREE.Matrix4().makeTranslation(0, 0, 0.005 * i)));
+    }
+    return result;
+  })();
+  const geometry = THREE.BufferGeometryUtils.mergeBufferGeometries(geometries);
+  const targetVsh = `
+    void main() {
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+    }
+  `;
+  const targetFsh = `
+    uniform float uTime;
+    void main() {
+      gl_FragColor = vec4(${new THREE.Color(0x4fc3f7).toArray().map(n => n.toFixed(8)).join(', ')}, 1.0);
+    }
+  `;
+  const material = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: {
+        type: 'f',
+        value: 0,
+      },
+    },
+    vertexShader: targetVsh,
+    fragmentShader: targetFsh,
+    side: THREE.DoubleSide,
+    // transparent: true,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.frustumCulled = false;
+  return mesh;
+})();
+lineMesh.position.y = 1;
+lineMesh.position.z = -1/2;
+scene.add(lineMesh);
+
 const _makeControllerMesh = () => {
   const geometry = new THREE.CylinderBufferGeometry(0.005, 0.005, 1)
     .applyMatrix(new THREE.Matrix4().makeTranslation(0, 1/2, 0))
