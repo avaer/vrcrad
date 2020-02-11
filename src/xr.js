@@ -8,16 +8,28 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(window.innerWidth, window.innerHeight, false);
-renderer.setClearAlpha(0);
-// renderer.outputEncoding = THREE.sRGBEncoding;
+// renderer.setClearColor(new THREE.Color(0x000000), 0);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.physicallyCorrectLights = true;
+// renderer.gammaFactor = 1;
 renderer.xr.enabled = true;
 
 const scene = new THREE.Scene();
-const camera = new THREE.Camera();
+scene.background = new THREE.Color(0xCCCCCC);
+
+const camera = new THREE.PerspectiveCamera();
+camera.position.y = 1;
+camera.position.z = 0.2;
+const rect = canvas2d.getBoundingClientRect();
+camera.aspect = rect.width/rect.height;
+camera.updateProjectionMatrix();
 
 const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 2);
-directionalLight.position.set(1, 1, 1);
+directionalLight.position.set(2, 2, 2);
 scene.add(directionalLight);
+const directionalLight2 = new THREE.DirectionalLight(0xFFFFFF, 2);
+directionalLight2.position.set(0, 1, -1);
+scene.add(directionalLight2);
 const ambientLight = new THREE.AmbientLight(0x808080);
 scene.add(ambientLight);
 
@@ -32,15 +44,44 @@ cubeMesh.position.set(0, 1.5, -1);
 cubeMesh.frustumCulled = false;
 scene.add(cubeMesh);
 
+const card = (() => {
+  const object = new THREE.Object3D();
+  new THREE.GLTFLoader().load('crad.glb', o => {
+    o = o.scene;
+    o = o.children[2];
+    // o.children = o.children.slice(0, 1);
+    // console.log('got object', o);
+    /* o.children.forEach(o => {
+      // console.log('got o', o);
+      o.material = new THREE.MeshPhongMaterial({
+        map: o.material.map,
+        color: o.material.color,
+      });
+      // o.material.roughness = 0;
+    }); */
+    window.o = o;
+    object.add(o);
+  }, function onProgress() {
+    // nothing
+  }, err => {
+    console.warn(err);
+  });
+  object.position.set(0, 1, 0);
+  return object;
+})();
+scene.add(card);
+
 renderer.setAnimationLoop(render);
 function render() {
   cubeMesh.rotation.x += 0.01;
   cubeMesh.rotation.z += 0.01;
+  
+  card.rotation.x += 0.05;
 
   renderer.render(scene, camera);
 }
 
-const NUM_POSITIONS_CHUNK = 150 * 1024;
+/* const NUM_POSITIONS_CHUNK = 150 * 1024;
 const pixelSize = 0.03;
 
 const _makeImageDataGeometry = (width, height, size, matrix, imageDataData) => {
@@ -186,13 +227,8 @@ const makeSpriteMesh = img => {
   const material = pixelMaterial;
 
   const mesh = new THREE.Mesh(geometry, material);
-  // mesh.position.set(pixelSize, 0, 0);
-  /* mesh.quaternion.setFromAxisAngle(
-    new THREE.Vector3(0, 0, 1),
-    Math.PI / 4
-  ); */
   return mesh;
-};
+}; */
 
 export function xrEnter() {
   let currentSession = null;
