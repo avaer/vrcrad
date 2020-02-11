@@ -332,24 +332,33 @@ const makeBlockMesh = (() => {
     }
   `;
   const targetFsh = `
+    uniform float uSelected;
     uniform float uTime;
     void main() {
-      gl_FragColor = vec4(vec3(1.0 - min(pow(uTime, 0.5), 0.9)), 1.0);
+      if (uSelected > 0.0) {
+        gl_FragColor = vec4(${new THREE.Color(0x4fc3f7).toArray().map(n => n.toFixed(8)).join(', ')}, 1.0);
+      } else {
+        gl_FragColor = vec4(vec3(1.0 - min(pow(uTime, 0.5), 0.9)), 1.0);
+      }
     }
   `;
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: {
-        type: 'f',
-        value: 0,
-      },
-    },
-    vertexShader: targetVsh,
-    fragmentShader: targetFsh,
-    // transparent: true,
-  });
   return () => {
-  const mesh = new THREE.Mesh(geometry, material);
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uSelected: {
+          type: 'f',
+          value: 0,
+        },
+        uTime: {
+          type: 'f',
+          value: 0,
+        },
+      },
+      vertexShader: targetVsh,
+      fragmentShader: targetFsh,
+      // transparent: true,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
     mesh.frustumCulled = false;
     // mesh.visible = false;
     return mesh;
@@ -359,6 +368,7 @@ const makeBlockMesh = (() => {
 let itemBlockMeshes = [];
 const itemMeshes = Promise.all([
   'Armor_03.png',
+  'Food_37.png',
 ].map((name, i) => {
   return new Promise((accept, reject) => {
     const img = new Image();
@@ -471,7 +481,9 @@ function render() {
   
   // card.rotation.x += 0.05;
 
-  itemBlockMeshes.forEach(itemBlockMesh => {
+  itemBlockMeshes.forEach((itemBlockMesh, i) => {
+    console.log('got i', itemBlockMesh, i)
+    itemBlockMesh.material.uniforms.uSelected.value = (i > 0) ? 1 : 0;
     itemBlockMesh.material.uniforms.uTime.value = (Date.now() % 1000) / 1000;
   });
 
