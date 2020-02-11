@@ -49,17 +49,6 @@ const card = (() => {
   new THREE.GLTFLoader().load('crad.glb', o => {
     o = o.scene;
     o = o.children[2];
-    // o.children = o.children.slice(0, 1);
-    // console.log('got object', o);
-    /* o.children.forEach(o => {
-      // console.log('got o', o);
-      o.material = new THREE.MeshPhongMaterial({
-        map: o.material.map,
-        color: o.material.color,
-      });
-      // o.material.roughness = 0;
-    }); */
-    // window.o = o;
     object.add(o);
   }, function onProgress() {
     // nothing
@@ -70,6 +59,16 @@ const card = (() => {
   return object;
 })();
 scene.add(card);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+// controls.dampingFactor = 0.05;
+controls.screenSpacePanning = false;
+// controls.minDistance = 100;
+// controls.maxDistance = 500;
+controls.maxPolarAngle = Math.PI / 2;
+controls.target.set(0, 1, 0);
+controls.update();
 
 renderer.setAnimationLoop(render);
 function render() {
