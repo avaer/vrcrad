@@ -56,24 +56,29 @@ const card = (() => {
     // console.log('got', fontJson, fontTexture, o);
     const w = 0.0856 * 0.8;
 
-    const _makeTextMesh = text => {
+    const _makeTextMesh = (text, fontSize, anchorX, anchorY) => {
       const textMesh = new TextMesh();
       textMesh.text = text;
       textMesh.font = './GeosansLight.ttf';
-      textMesh.fontSize = 0.007;
+      textMesh.fontSize = fontSize;
       // textMesh.position.set(0, 1, -2);
       textMesh.color = 0xFFFFFF;
-      textMesh.anchorX = 'left';
-      textMesh.anchorY = 'bottom-baseline';
+      textMesh.anchorX = anchorX;
+      textMesh.anchorY = anchorY;
       textMesh.frustumCulled = false;
       textMesh.sync();
       return textMesh;
     };
-    const textMesh = _makeTextMesh('Avaer Kazmer');
+    const textMesh = _makeTextMesh('Avaer Kazmer', 0.007, 'left', 'bottom-baseline');
     textMesh.position.x = -w/2;
     textMesh.position.y = -0.02;
     textMesh.position.z = 0.001;
     scene.add(textMesh);
+
+    const textMesh2 = _makeTextMesh('2 CRD', 0.015, 'center', 'middle');
+    textMesh2.position.x = w/4;
+    textMesh2.position.z = 0.001;
+    scene.add(textMesh2);
 
     const chipMesh = (() => {
       const geometry = new THREE.PlaneBufferGeometry(0.01, 0.01);
