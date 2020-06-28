@@ -1,4 +1,6 @@
-const {THREE} = window;
+import * as THREE from './three.module.js';
+import {GLTFLoader} from './GLTFLoader.js';
+import {TextMesh} from './textmesh-standalone.esm.js'
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -35,7 +37,7 @@ const card = (() => {
       new THREE.TextureLoader().load('DejaVu-sdf.png', accept);
     }), */
     new Promise((accept, reject) => {
-      new THREE.GLTFLoader().load('crad.glb', o => {
+      new GLTFLoader().load('crad.glb', o => {
         o = o.scene;
         o = o.children[2];
         o.children[1].material = new THREE.MeshPhongMaterial({
@@ -53,37 +55,25 @@ const card = (() => {
   ]) => {
     // console.log('got', fontJson, fontTexture, o);
     const w = 0.0856 * 0.8;
-    const _makeTextMesh = (s = '') => {
-      const geometry = new THREE.PlaneBufferGeometry(w, w/10);
-      const canvas = document.createElement('canvas');
-      canvas.width = 2048;
-      canvas.height = 2048/10;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = "rgba(255, 255, 255, 0)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#FFF";
-      ctx.textAlign = "start";
-      ctx.textBaseline = "top";
-      ctx.font = "80px Consolas";
-      ctx.fillText(s, 0, 0);
-      const texture = new THREE.Texture(canvas);
-      texture.needsUpdate = true;
-      texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
-      texture.minFilter = THREE.LinearFilter;
-      const material = new THREE.MeshPhongMaterial({
-        map: texture,
-        transparent: true,
-        alphaTest: 0.5,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      return mesh;
+
+    const _makeTextMesh = text => {
+      const textMesh = new TextMesh();
+      textMesh.text = text;
+      textMesh.font = './GeosansLight.ttf';
+      textMesh.fontSize = 0.007;
+      // textMesh.position.set(0, 1, -2);
+      textMesh.color = 0xFFFFFF;
+      textMesh.anchorX = 'left';
+      textMesh.anchorY = 'bottom-baseline';
+      textMesh.frustumCulled = false;
+      textMesh.sync();
+      return textMesh;
     };
-    const textMesh = _makeTextMesh('Avaer');
-    textMesh.frustumCulled = false;
+    const textMesh = _makeTextMesh('Avaer Kazmer');
+    textMesh.position.x = -w/2;
     textMesh.position.y = -0.02;
     textMesh.position.z = 0.001;
-    // window.textMesh = textMesh;
-    object.add(textMesh);
+    scene.add(textMesh);
 
     const chipMesh = (() => {
       const geometry = new THREE.PlaneBufferGeometry(0.01, 0.01);
@@ -117,9 +107,9 @@ const card = (() => {
 })();
 scene.add(card);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
+// const controls = new THREE.OrbitControls(camera, renderer.domElement);
 // controls.target.set(0, 1, 0);
-controls.update();
+// controls.update();
 
 renderer.setAnimationLoop(render);
 function render() {
