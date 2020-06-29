@@ -121,6 +121,14 @@ function render() {
   renderer.render(scene, camera);
 }
 
+(async () => {
+  const [userAddress, contractAddress] = await Promise.all([
+    xrpackage.getUserAddress(),
+    xrpackage.getContractAddress(),
+  ]);
+  console.log('got user contract address', userAddress, contractAddress);
+})().catch(console.warn);
+
 {
   let currentSession = null;
 
