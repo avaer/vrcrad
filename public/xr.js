@@ -127,6 +127,51 @@ function render() {
     xrpackage.getContractAddress(),
   ]);
   console.log('got user contract address', userAddress, contractAddress);
+
+  await xrpackage.executeTransaction(`
+    // Transaction2.cdc
+
+    import FungibleToken from 0x${contractAddress}
+
+    // This transaction configures an account to store and receive tokens defined by
+    // the FungibleToken contract.
+    transaction {
+      prepare(acct: AuthAccount) {
+        // Create a new empty Vault object
+        let vaultA <- FungibleToken.createEmptyVault()
+          
+        // Store the vault in the account storage
+        let oldValue <- acct.load<@FungibleToken.Vault>(from: /storage/MainVault)
+        destroy oldValue
+        acct.save<@FungibleToken.Vault>(<-vaultA, to: /storage/MainVault)
+
+        log("Empty Vault stored")
+
+        // Create a public Receiver capability to the Vault
+        let ReceiverRef = acct.link<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>(/public/MainReceiver, target: /storage/MainVault)
+
+        log("References created")
+      }
+
+        post {
+            // Check that the capabilities were created correctly
+            getAccount(0x${userAddress}).getCapability(/public/MainReceiver)!
+                            .check<&FungibleToken.Vault{FungibleToken.Receiver}>():  
+                            "Vault Receiver Reference was not created correctly"
+        }
+    }
+  `);
+  const result = await xrpackage.executeScript(`
+    import FungibleToken from 0x${contractAddress}
+
+    pub fun main() : UFix64 {
+      let publicAccount = getAccount(0x${userAddress})
+      let capability = publicAccount.getCapability(/public/MainReceiver)!
+      let vaultRef = capability.borrow<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>()!
+      return vaultRef.balance
+    }
+  `);
+  console.log('got result', result);
 })().catch(console.warn);
 
 {
