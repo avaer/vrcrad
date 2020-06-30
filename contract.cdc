@@ -165,17 +165,18 @@ pub contract FungibleToken {
     // be initialized at deployment. This is just an example of what
     // an implementation could do in the init function. The numbers are arbitrary.
     init() {
-        self.totalSupply = 30.0
+        // self.totalSupply = 30.0
+        self.totalSupply = 0.0
 
         // create the Vault with the initial balance and put it in storage
         // account.save saves an object to the specified to path
         // The path is a literal path that consists of a domain and identifier
         // The domain must be storage, private, or public
         // the identifier can be any name
-        let oldVault <- self.account.load<@Vault>(from: /storage/MainVault)
+        /* let oldVault <- self.account.load<@Vault>(from: /storage/MainVault)
         destroy oldVault;
         let vault <- create Vault(balance: self.totalSupply)
-        self.account.save(<-vault, to: /storage/MainVault)
+        self.account.save(<-vault, to: /storage/MainVault) */
 
         // Create a new MintAndBurn resource and store it in account storage
         let oldVaultMinter <- self.account.load<@VaultMinter>(from: /storage/MainMinter)
