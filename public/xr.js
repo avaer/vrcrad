@@ -75,10 +75,11 @@ const card = (() => {
     textMesh.position.z = 0.001;
     scene.add(textMesh);
 
-    const textMesh2 = _makeTextMesh('2 CRD', 0.015, 'center', 'middle');
-    textMesh2.position.x = w/4;
-    textMesh2.position.z = 0.001;
-    scene.add(textMesh2);
+    const creditTextMesh = _makeTextMesh('2 CRD', 0.015, 'right', 'middle');
+    creditTextMesh.position.x = w/2;
+    creditTextMesh.position.z = 0.001;
+    scene.add(creditTextMesh);
+    object.creditTextMesh = creditTextMesh;
 
     const chipMesh = (() => {
       const geometry = new THREE.PlaneBufferGeometry(0.01, 0.01);
@@ -137,13 +138,13 @@ function render() {
     // the FungibleToken contract.
     transaction {
       prepare(acct: AuthAccount) {
-        // Create a new empty Vault object
-        let vaultA <- FungibleToken.createEmptyVault()
-          
         // Store the vault in the account storage
-        let oldValue <- acct.load<@FungibleToken.Vault>(from: /storage/MainVault)
-        destroy oldValue
-        acct.save<@FungibleToken.Vault>(<-vaultA, to: /storage/MainVault)
+        let vaultRef = acct.borrow<&FungibleToken.Vault>(from: /storage/MainVault)
+        if (vaultRef == nil) {
+          // Create a new empty Vault object
+          let vaultA <- FungibleToken.createEmptyVault()
+          acct.save<@FungibleToken.Vault>(<-vaultA, to: /storage/MainVault)
+        }
 
         log("Empty Vault stored")
 
@@ -161,17 +162,22 @@ function render() {
         }
     }
   `);
-  const result = await xrpackage.executeScript(`
-    import FungibleToken from 0x${contractAddress}
+  setInterval(async () => {
+    const result = await xrpackage.executeScript(`
+      import FungibleToken from 0x${contractAddress}
 
-    pub fun main() : UFix64 {
-      let publicAccount = getAccount(0x${userAddress})
-      let capability = publicAccount.getCapability(/public/MainReceiver)!
-      let vaultRef = capability.borrow<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>()!
-      return vaultRef.balance
-    }
-  `);
-  console.log('got result', result);
+      pub fun main() : UFix64 {
+        let publicAccount = getAccount(0x${userAddress})
+        let capability = publicAccount.getCapability(/public/MainReceiver)!
+        let vaultRef = capability.borrow<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>()!
+        return vaultRef.balance
+      }
+    `);
+    const crd = parseFloat(result.encodedData.value);
+    console.log('got result', crd, result);
+    card.creditTextMesh.text = `${crd} CRD`;
+    card.creditTextMesh.sync();
+  }, 1000);
 })().catch(console.warn);
 
 {

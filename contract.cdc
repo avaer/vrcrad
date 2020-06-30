@@ -9,15 +9,6 @@
 
 pub contract FungibleToken {
 
-    pub event KVIEvent(key: String, value: Int)
-    pub fun kviEvent(key: String, value: Int) {
-      emit KVIEvent(key: key, value: value)
-    }
-    pub event KVSEvent(key: String, value: String)
-    pub fun kvsEvent(key: String, value: String) {
-      emit KVSEvent(key: key, value: value)
-    }
-
     // Total supply of all tokens in existence.
     pub var totalSupply: UFix64
 
@@ -45,7 +36,7 @@ pub contract FungibleToken {
         //
         pub fun withdraw(amount: UFix64): @Vault {
             post {
-                // result refers to the return value of the function
+                // `result` refers to the return value of the function
                 result.balance == UFix64(amount):
                     "Withdrawal amount must be the same as the balance of the withdrawn Vault"
             }
@@ -62,7 +53,7 @@ pub contract FungibleToken {
     // can do custom things with the tokens, like split them up and
     // send them to different places.
     //
-  pub resource interface Receiver {
+    pub resource interface Receiver {
         // deposit
         //
         // Function that can be called to deposit tokens 
@@ -78,7 +69,7 @@ pub contract FungibleToken {
 
     // Balance
     //
-    // Interface that specifies a public balance field for the vault
+    // Interface that specifies a public `balance` field for the vault
     //
     pub resource interface Balance {
         pub var balance: UFix64
@@ -98,7 +89,7 @@ pub contract FungibleToken {
     // 
     pub resource Vault: Provider, Receiver, Balance {
         
-    // keeps track of the total balance of the account's tokens
+        // keeps track of the total balance of the account's tokens
         pub var balance: UFix64
 
         // initialize the balance at resource creation time
@@ -152,8 +143,8 @@ pub contract FungibleToken {
     pub resource VaultMinter {
 
         // Function that mints new tokens and deposits into an account's vault
-        // using their Receiver reference.
-        // We say &AnyResource{Receiver} to say that the recipient can be any resource
+        // using their `Receiver` reference.
+        // We say `&AnyResource{Receiver}` to say that the recipient can be any resource
         // as long as it implements the Receiver interface
         pub fun mintTokens(amount: UFix64, recipient: &AnyResource{Receiver}) {
             FungibleToken.totalSupply = FungibleToken.totalSupply + amount
@@ -165,22 +156,17 @@ pub contract FungibleToken {
     // be initialized at deployment. This is just an example of what
     // an implementation could do in the init function. The numbers are arbitrary.
     init() {
-        // self.totalSupply = 30.0
-        self.totalSupply = 0.0
+        self.totalSupply = 30.0
 
         // create the Vault with the initial balance and put it in storage
-        // account.save saves an object to the specified to path
+        // account.save saves an object to the specified `to` path
         // The path is a literal path that consists of a domain and identifier
-        // The domain must be storage, private, or public
+        // The domain must be `storage`, `private`, or `public`
         // the identifier can be any name
-        /* let oldVault <- self.account.load<@Vault>(from: /storage/MainVault)
-        destroy oldVault;
         let vault <- create Vault(balance: self.totalSupply)
-        self.account.save(<-vault, to: /storage/MainVault) */
+        self.account.save(<-vault, to: /storage/MainVault)
 
         // Create a new MintAndBurn resource and store it in account storage
-        let oldVaultMinter <- self.account.load<@VaultMinter>(from: /storage/MainMinter)
-        destroy oldVaultMinter;
         self.account.save(<-create VaultMinter(), to: /storage/MainMinter)
 
         // Create a private capability link for the Minter
