@@ -1,6 +1,7 @@
 import * as THREE from './three.module.js';
 import {GLTFLoader} from './GLTFLoader.js';
 import {TextMesh} from './textmesh-standalone.esm.js'
+import {makeCredentials, executeTransaction, executeScript} from 'https://flow.webaverse.com/flow.js';
 
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
@@ -122,17 +123,14 @@ function render() {
   renderer.render(scene, camera);
 }
 
-(async () => {
-  const [userAddress, contractAddress] = await Promise.all([
-    xrpackage.getUserAddress(),
-    xrpackage.getContractAddress(),
-  ]);
-  console.log('got user contract address', userAddress, contractAddress);
+navigator.xr.addEventListener('secure', async e => {
+  console.log('got user contract address', e.data);
+  const {packageAddress, credentials} = e.data;
 
-  await xrpackage.executeTransaction(`
+  await executeTransaction(credentials, `
     // Transaction2.cdc
 
-    import FungibleToken from 0x${contractAddress}
+    import FungibleToken from 0x${packageAddress}
 
     // This transaction configures an account to store and receive tokens defined by
     // the FungibleToken contract.
@@ -156,18 +154,18 @@ function render() {
 
         post {
             // Check that the capabilities were created correctly
-            getAccount(0x${userAddress}).getCapability(/public/MainReceiver)!
+            getAccount(0x${credentials.address}).getCapability(/public/MainReceiver)!
                             .check<&FungibleToken.Vault{FungibleToken.Receiver}>():  
                             "Vault Receiver Reference was not created correctly"
         }
     }
   `);
   setInterval(async () => {
-    const result = await xrpackage.executeScript(`
-      import FungibleToken from 0x${contractAddress}
+    const result = await executeScript(`
+      import FungibleToken from 0x${packageAddress}
 
       pub fun main() : UFix64 {
-        let publicAccount = getAccount(0x${userAddress})
+        let publicAccount = getAccount(0x${credentials.address})
         let capability = publicAccount.getCapability(/public/MainReceiver)!
         let vaultRef = capability.borrow<&FungibleToken.Vault{FungibleToken.Receiver, FungibleToken.Balance}>()!
         return vaultRef.balance
@@ -178,7 +176,7 @@ function render() {
     card.creditTextMesh.text = `${crd} CRD`;
     card.creditTextMesh.sync();
   }, 1000);
-})().catch(console.warn);
+});
 
 {
   let currentSession = null;
