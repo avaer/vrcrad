@@ -175,11 +175,16 @@ navigator.xr.addEventListener('secure', async e => {
     console.log('got result', crd, result);
     card.creditTextMesh.text = `${crd} CRD`;
     card.creditTextMesh.sync();
-
-    navigator.xr.emit('vrcrad', {
-      lol: 'zol',
-    });
   }, 1000);
+
+  navigator.xr.addEventListener('event', async e => {
+    console.log('event event', e.data);
+    if (e.data.type === 'paymentrequest') {
+      e.data.respond({
+        credentials,
+      });
+    }
+  });
 });
 
 {
