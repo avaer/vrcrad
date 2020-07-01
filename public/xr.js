@@ -119,6 +119,13 @@ const raycaster = new THREE.Raycaster();
 let lastClicked = false;
 renderer.setAnimationLoop(render);
 function render(timestamp, frame) {
+  if (currentSession) {
+    const vrCamera = renderer.xr.getCamera(camera);
+    if (vrCamera.cameras.length >= 2) {
+      vrCamera.cameras[0].matrixWorld.decompose(camera.position, camera.quaternion, camera.scale);
+    }
+  }
+
   if (dialog) {
     dialog.okButton.material.color.setHex(0xef5350);
     dialog.cancelButton.material.color.setHex(0xef5350);
