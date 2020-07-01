@@ -3,6 +3,20 @@ import {GLTFLoader} from './GLTFLoader.js';
 import {TextMesh} from './textmesh-standalone.esm.js'
 import {makeCredentials, executeTransaction, executeScript} from 'https://flow.webaverse.com/flow.js';
 
+const _makeTextMesh = (text, fontSize, color, anchorX, anchorY) => {
+  const textMesh = new TextMesh();
+  textMesh.text = text;
+  textMesh.font = './GeosansLight.ttf';
+  textMesh.fontSize = fontSize;
+  // textMesh.position.set(0, 1, -2);
+  textMesh.color = color;
+  textMesh.anchorX = anchorX;
+  textMesh.anchorY = anchorY;
+  textMesh.frustumCulled = false;
+  textMesh.sync();
+  return textMesh;
+};
+
 const renderer = new THREE.WebGLRenderer({
   antialias: true,
   alpha: true,
@@ -57,26 +71,13 @@ const card = (() => {
     // console.log('got', fontJson, fontTexture, o);
     const w = 0.0856 * 0.8;
 
-    const _makeTextMesh = (text, fontSize, anchorX, anchorY) => {
-      const textMesh = new TextMesh();
-      textMesh.text = text;
-      textMesh.font = './GeosansLight.ttf';
-      textMesh.fontSize = fontSize;
-      // textMesh.position.set(0, 1, -2);
-      textMesh.color = 0xFFFFFF;
-      textMesh.anchorX = anchorX;
-      textMesh.anchorY = anchorY;
-      textMesh.frustumCulled = false;
-      textMesh.sync();
-      return textMesh;
-    };
-    const textMesh = _makeTextMesh('Avaer Kazmer', 0.007, 'left', 'bottom-baseline');
+    const textMesh = _makeTextMesh('Avaer Kazmer', 0.007, 0xFFFFFF, 'left', 'bottom-baseline');
     textMesh.position.x = -w/2;
     textMesh.position.y = -0.02;
     textMesh.position.z = 0.001;
     scene.add(textMesh);
 
-    const creditTextMesh = _makeTextMesh('2 CRD', 0.015, 'right', 'middle');
+    const creditTextMesh = _makeTextMesh('2 CRD', 0.015, 0xFFFFFF, 'right', 'middle');
     creditTextMesh.position.x = w/2;
     creditTextMesh.position.z = 0.001;
     scene.add(creditTextMesh);
@@ -122,6 +123,54 @@ renderer.setAnimationLoop(render);
 function render() {
   renderer.render(scene, camera);
 }
+
+let dialog = null;
+const _makeDialog = () => {
+  const object = new THREE.Object3D();
+
+  const background = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 1), new THREE.MeshBasicMaterial({
+    color: 0xFFFFFF,
+    transparent: true,
+    opacity: 0.5,
+    side: THREE.DoubleSide,
+  }));
+  object.add(background);
+
+  const textMesh = _makeTextMesh('Confirm purchase?', 0.1, 0x333333, 'center', 'middle');
+  textMesh.position.z = 0.01;
+  object.add(textMesh);
+
+  {
+    const okButton = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({
+      color: 0xef5350,
+      side: THREE.DoubleSide,
+    }));
+    const textMesh = _makeTextMesh('OK', 0.05, 0xFFFFFF, 'center', 'middle');
+    textMesh.position.z = 0.01;
+    okButton.add(textMesh);
+    okButton.position.x = 0.25;
+    okButton.position.y = -0.25;
+    okButton.position.z = 0.01;
+    object.add(okButton);
+    object.okButton = okButton;
+  }
+  {
+    const cancelButton = new THREE.Mesh(new THREE.PlaneBufferGeometry(0.4, 0.2), new THREE.MeshBasicMaterial({
+      color: 0xef5350,
+      side: THREE.DoubleSide,
+    }));
+    const textMesh = _makeTextMesh('Cancel', 0.05, 0xFFFFFF, 'center', 'middle');
+    textMesh.position.z = 0.01;
+    cancelButton.add(textMesh);
+    cancelButton.position.x = -0.25;
+    cancelButton.position.y = -0.25;
+    cancelButton.position.z = 0.01;
+    object.add(cancelButton);
+    object.cancelButton = cancelButton;
+  }
+
+  return object;
+};
 
 navigator.xr.addEventListener('secure', async e => {
   console.log('got user contract address', e.data);
@@ -180,9 +229,19 @@ navigator.xr.addEventListener('secure', async e => {
   navigator.xr.addEventListener('event', async e => {
     console.log('event event', e.data);
     if (e.data.type === 'paymentrequest') {
-      e.data.respond({
-        credentials,
-      });
+      if (!dialog) {
+        dialog = _makeDialog();
+        scene.add(dialog);
+
+        setTimeout(() => {
+          e.data.respond({
+            credentials,
+          });
+
+          scene.remove(dialog);
+          dialog = null;
+        }, 3000);
+      }
     }
   });
 });
