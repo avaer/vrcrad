@@ -115,12 +115,57 @@ const card = (() => {
 })();
 scene.add(card);
 
-// const controls = new THREE.OrbitControls(camera, renderer.domElement);
-// controls.target.set(0, 1, 0);
-// controls.update();
-
+const raycaster = new THREE.Raycaster();
+let lastClicked = false;
 renderer.setAnimationLoop(render);
-function render() {
+function render(timestamp, frame) {
+  if (dialog) {
+    dialog.okButton.material.color.setHex(0xef5350);
+    dialog.cancelButton.material.color.setHex(0xef5350);
+
+    let clicked = false;
+
+    if (currentSession && frame) {
+      const referenceSpace = renderer.xr.getReferenceSpace();
+      const inputSources = Array.from(currentSession.inputSources);
+      const inputSource = inputSources.find(inputSource => inputSource.handedness === 'right');
+      if (inputSource) {
+        let pose, gamepad;
+        if ((pose = frame.getPose(inputSource.targetRaySpace, referenceSpace)) && (gamepad = inputSource.gamepad)) {
+          const p = new THREE.Vector3();
+          const q = new THREE.Quaternion();
+          const s = new THREE.Vector3();
+          new THREE.Matrix4().fromArray(pose.transform.matrix).decompose(p, q, s);
+
+          clicked = gamepad.buttons[0].pressed;
+
+          raycaster.ray.origin.copy(p);
+          raycaster.ray.direction.set(0, 0, -1).applyQuaternion(q);
+          const intersects = raycaster.intersectObjects([dialog.okButton, dialog.cancelButton]);
+          if (intersects.length > 0) {
+            const {object} = intersects[0];
+            object.material.color.multiplyScalar(0.5);
+
+            if (clicked && !lastClicked) {
+              console.log('clicked', object === dialog.okButton);
+
+              if (object === dialog.okButton) {
+                dialog.respond({
+                  credentials,
+                });
+              }
+
+              scene.remove(dialog);
+              dialog = null;
+            }
+          }
+        }
+      }
+    }
+
+    lastClicked = clicked;
+  }
+
   renderer.render(scene, camera);
 }
 
@@ -172,9 +217,11 @@ const _makeDialog = () => {
   return object;
 };
 
+let credentials = null;
 navigator.xr.addEventListener('secure', async e => {
   console.log('got user contract address', e.data);
-  const {packageAddress, credentials} = e.data;
+  const {packageAddress} = e.data;
+  credentials = e.data.credentials;
 
   await executeTransaction(credentials, `
     // Transaction2.cdc
@@ -224,31 +271,26 @@ navigator.xr.addEventListener('secure', async e => {
     console.log('got result', crd, result);
     card.creditTextMesh.text = `${crd} CRD`;
     card.creditTextMesh.sync();
-  }, 1000);
+  }, 1000);  
 
   navigator.xr.addEventListener('event', async e => {
     console.log('event event', e.data);
     if (e.data.type === 'paymentrequest') {
       if (!dialog) {
         dialog = _makeDialog();
+        console.log('got camera position', camera.position.toArray().join(','));
+        dialog.position.copy(camera.position)
+          .add(new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion));
+        dialog.quaternion.copy(camera.quaternion);
+        dialog.respond = e.data.respond;
         scene.add(dialog);
-
-        setTimeout(() => {
-          e.data.respond({
-            credentials,
-          });
-
-          scene.remove(dialog);
-          dialog = null;
-        }, 3000);
       }
     }
   });
 });
 
+let currentSession = null;
 {
-  let currentSession = null;
-
   function onSessionStarted( session ) {
     session.addEventListener( 'end', onSessionEnded);
     renderer.xr.setSession(session);
